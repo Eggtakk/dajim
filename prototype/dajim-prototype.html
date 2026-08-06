@@ -1,0 +1,650 @@
+<meta charset="utf-8">
+<title>다짐 — UI 프로토타입</title>
+<style>
+  :root{
+    --paper:#FFFFFF; --paper-raised: color-mix(in srgb, var(--brand) 3%, white); --ink:#000000; --ink-soft:rgba(0,0,0,0.58);
+    --brand:#4158FB; --brand-soft:rgba(65,88,251,0.10); --brand-deep:#0523F8;
+    --accent-pink:#FB41B5; --accent-pink-soft:rgba(251,65,181,0.14);
+    --accent-yellow:#FBE441;
+    --accent-green:#41FB87; --accent-green-soft:rgba(65,251,135,0.16);
+    --line: rgba(0,0,0,0.14); --line-strong: rgba(0,0,0,0.28);
+    --shadow: rgba(0,0,0,0.12);
+    --chrome-bg: #000000;
+    --font-kr: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#000000; --paper-raised: color-mix(in srgb, var(--brand) 6%, black); --ink:#FFFFFF; --ink-soft:rgba(255,255,255,0.62);
+      --brand:#7F8EFC; --brand-soft:rgba(127,142,252,0.16); --brand-deep:#4158FB;
+      --line: rgba(255,255,255,0.16); --line-strong: rgba(255,255,255,0.30);
+      --shadow: rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#000000; --paper-raised: color-mix(in srgb, var(--brand) 6%, black); --ink:#FFFFFF; --ink-soft:rgba(255,255,255,0.62);
+    --brand:#7F8EFC; --brand-soft:rgba(127,142,252,0.16); --brand-deep:#4158FB;
+    --line: rgba(255,255,255,0.16); --line-strong: rgba(255,255,255,0.30);
+    --shadow: rgba(0,0,0,0.6);
+  }
+  :root[data-theme="light"]{
+    --paper:#FFFFFF; --paper-raised: color-mix(in srgb, var(--brand) 3%, white); --ink:#000000; --ink-soft:rgba(0,0,0,0.58);
+    --brand:#4158FB; --brand-soft:rgba(65,88,251,0.10); --brand-deep:#0523F8;
+    --line: rgba(0,0,0,0.14); --line-strong: rgba(0,0,0,0.28);
+    --shadow: rgba(0,0,0,0.12);
+  }
+
+  *{ box-sizing:border-box; }
+  body{ margin:0; }
+  .page{
+    font-family: var(--font-kr);
+    color: var(--ink);
+    background: var(--paper);
+    min-height:100vh;
+    padding: 28px 20px 80px;
+  }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; } }
+
+  /* ---------- meta toolbar ---------- */
+  .meta{
+    max-width: 1180px; margin: 0 auto 22px; padding: 16px 20px;
+    background: var(--paper-raised); border:1px solid var(--line); border-radius: 14px;
+    display:flex; flex-wrap:wrap; align-items:center; gap:14px 22px;
+    box-shadow: 0 1px 0 var(--line);
+  }
+  .meta-brand{ display:flex; align-items:baseline; gap:8px; margin-right:auto; }
+  .meta-brand .mark{ font-family: var(--font-kr); font-size:20px; font-weight:800; letter-spacing:0.01em; }
+  .meta-brand .sub{ font-size:12px; color:var(--ink-soft); }
+  .seg{ display:inline-flex; background:var(--brand-soft); border-radius:999px; padding:3px; gap:2px; }
+  .seg button{
+    border:none; background:transparent; padding:7px 14px; border-radius:999px; font-size:13px;
+    font-family:inherit; color:var(--ink-soft); cursor:pointer; font-weight:600; transition: background .18s, color .18s;
+  }
+  .seg button.active{ background:var(--brand); color:var(--paper-raised); }
+  .seg button:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
+  .jump{ display:flex; flex-wrap:wrap; gap:6px; }
+  .jump button{
+    border:1px solid var(--line); background:transparent; color:var(--ink-soft);
+    padding:6px 12px; border-radius:999px; font-size:12.5px; font-family:inherit; cursor:pointer;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .jump button.active{ border-color:var(--brand); color:var(--brand); background:var(--brand-soft); font-weight:700; }
+  .jump button:hover{ border-color:var(--line-strong); }
+  .jump button:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
+
+  .stage-wrap{ max-width:1180px; margin:0 auto; display:flex; justify-content:center; }
+
+  /* ================= shared UI atoms ================= */
+  .icon{ width:1em; height:1em; display:inline-block; vertical-align:-0.15em; }
+  .num{ font-variant-numeric: tabular-nums; }
+  .pill{ display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700; }
+  .pill.warn{ background: color-mix(in srgb, var(--ink) 7%, transparent); color:var(--ink); }
+  .pill.good{ background:var(--accent-green-soft); color:var(--accent-green); }
+  .pill.neutral{ background:var(--brand-soft); color:var(--brand); }
+  .pill.streak{ background:var(--accent-yellow); color:#000; }
+  .btn{
+    font-family:inherit; border:none; border-radius:12px; padding:13px 20px; font-size:14.5px; font-weight:700;
+    cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition: transform .12s, opacity .12s;
+  }
+  .btn:active{ transform: scale(0.98); }
+  .btn:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
+  .btn.primary{ background:var(--brand); color:#fff; }
+  .btn.primary:hover{ opacity:0.92; }
+  .btn.ghost{ background:transparent; color:var(--brand); border:1px solid var(--line-strong); }
+  .btn.accent{ background:var(--accent-pink); color:#fff; }
+  .btn.accent:hover{ opacity:0.92; }
+  .card{ background:var(--paper-raised); border:1px solid var(--line); border-radius:16px; }
+  .chip{
+    border:1px solid var(--line-strong); background:var(--paper-raised); color:var(--ink);
+    padding:8px 14px; border-radius:999px; font-size:13px; font-family:inherit; cursor:pointer; font-weight:600;
+  }
+  .chip.selected{ background:var(--brand); border-color:var(--brand); color:var(--paper-raised); }
+  .chip:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
+  .eyebrow{ font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--brand); font-weight:700; }
+  .hr{ height:1px; background:var(--line); border:none; margin:0; }
+
+  /* screens visibility */
+  .screen{ display:none; }
+  .screen.active{ display:block; animation: fadein .25s ease; }
+  @keyframes fadein{ from{ opacity:0; transform:translateY(4px);} to{ opacity:1; transform:none;} }
+
+  /* ================= DESKTOP STAGE ================= */
+  .stage{ display:none; width:100%; }
+  .stage.active{ display:block; }
+
+  .browser{
+    background: var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow: 0 20px 60px -20px var(--shadow);
+  }
+  .chrome{
+    display:flex; align-items:center; gap:14px; padding:12px 16px;
+    background: color-mix(in srgb, var(--paper) 60%, var(--paper-raised));
+    border-bottom:1px solid var(--line);
+  }
+  .traffic{ display:flex; gap:7px; }
+  .traffic span{ width:11px; height:11px; border-radius:50%; background:var(--line-strong); }
+  .urlbar{
+    flex:1; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:6px 14px;
+    font-size:12.5px; color:var(--ink-soft); text-align:center;
+  }
+  .app{ display:flex; height:720px; }
+  .rail{
+    width:236px; flex-shrink:0; background:var(--chrome-bg); color:#EFEBDD; padding:24px 18px;
+    display:flex; flex-direction:column; gap:26px;
+  }
+  .rail-brand{ font-family:var(--font-kr); font-size:22px; font-weight:800; letter-spacing:0.01em; color:#fff; }
+  .rail-brand small{ display:block; font-family:var(--font-kr); font-size:11px; font-weight:500; opacity:0.6; letter-spacing:0.02em; margin-top:2px; }
+  .rail-user{ display:flex; align-items:center; gap:10px; padding:12px; background:rgba(255,255,255,0.06); border-radius:12px; }
+  .avatar{ width:36px; height:36px; border-radius:50%; background:var(--accent-pink); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:14px; }
+  .rail-user .name{ font-size:13.5px; font-weight:700; }
+  .rail-user .desc{ font-size:11.5px; opacity:0.65; }
+  .rail-nav{ display:flex; flex-direction:column; gap:3px; }
+  .rail-nav button{
+    display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px; border:none;
+    background:transparent; color:rgba(239,235,221,0.75); font-family:inherit; font-size:13.5px; font-weight:600;
+    cursor:pointer; text-align:left;
+  }
+  .rail-nav button svg{ width:17px; height:17px; opacity:0.9; }
+  .rail-nav button.active{ background:rgba(255,255,255,0.12); color:#fff; }
+  .rail-nav button:hover{ color:#fff; }
+  .rail-nav button:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
+  .rail-foot{ margin-top:auto; font-size:11px; opacity:0.5; line-height:1.6; }
+
+  .canvas{ flex:1; overflow-y:auto; padding:34px 40px; background:var(--paper); }
+  .canvas-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:26px; }
+  .canvas-head h1{ font-family:var(--font-kr); font-size:26px; margin:0 0 6px; font-weight:800; letter-spacing:0.01em; }
+  .canvas-head .date{ font-size:13px; color:var(--ink-soft); }
+
+  .bento{ display:grid; grid-template-columns: 1.5fr 1fr; gap:18px; }
+  .bento-full{ grid-column: 1 / -1; }
+
+  /* ================= MOBILE STAGE ================= */
+  .phone{
+    width:375px; height:812px; background:var(--chrome-bg); border-radius:52px; padding:14px;
+    box-shadow: 0 30px 70px -20px var(--shadow); position:relative;
+  }
+  .phone-screen{ width:100%; height:100%; background:var(--paper); border-radius:38px; overflow:hidden; position:relative; display:flex; flex-direction:column; }
+  .notch{ position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:28px; background:var(--chrome-bg); border-radius:0 0 18px 18px; z-index:5; }
+  .statusbar{ display:flex; justify-content:space-between; padding:16px 26px 4px; font-size:13px; font-weight:700; color:var(--ink); flex-shrink:0; }
+  .m-scroll{ flex:1; overflow-y:auto; padding:6px 20px 18px; }
+  .m-scroll::-webkit-scrollbar{ display:none; }
+  .tabbar{
+    flex-shrink:0; display:flex; justify-content:space-around; align-items:center; padding:10px 8px 26px;
+    border-top:1px solid var(--line); background:var(--paper-raised);
+  }
+  .tabbar button{
+    background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:4px;
+    color:var(--ink-soft); font-family:inherit; font-size:10.5px; font-weight:600; cursor:pointer; padding:4px 6px;
+  }
+  .tabbar button svg{ width:21px; height:21px; }
+  .tabbar button.active{ color:var(--brand); }
+  .tabbar button:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; border-radius:8px; }
+
+  .m-head{ padding:14px 2px 18px; }
+  .m-head h1{ font-family:var(--font-kr); font-size:21px; margin:0 0 4px; font-weight:800; }
+  .m-head .date{ font-size:12.5px; color:var(--ink-soft); }
+
+  /* content components reused in both */
+  .predict-card{
+    padding:24px; border-radius:18px; position:relative; overflow:hidden;
+  }
+  .predict-card.neg{ background: var(--paper-raised); border:1.5px solid var(--ink); }
+  .predict-card.pos{ background: var(--paper-raised); border:1.5px solid var(--brand); }
+  .predict-card .icon-badge{ width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+  .predict-card.neg .icon-badge{ background:var(--ink); color:var(--paper); }
+  .predict-card.pos .icon-badge{ background:var(--brand); color:#fff; }
+  .predict-card p.lead{ font-size:16.5px; line-height:1.55; margin:0 0 14px; font-weight:600; }
+  .predict-card .metric{ font-size:15px; font-weight:800; }
+  .predict-card.neg .metric{ color:var(--ink); }
+  .predict-card.pos .metric{ color:var(--brand); }
+  .predict-note{ font-size:12px; color:var(--ink-soft); margin-top:12px; }
+
+  .stat-card{ padding:18px 20px; }
+  .stat-card .label{ font-size:12.5px; color:var(--ink-soft); margin-bottom:8px; font-weight:600; }
+  .stat-card .value{ font-size:23px; font-weight:800; }
+  .stat-card .change{ font-size:12.5px; margin-top:6px; font-weight:700; }
+  .stat-card .change.up{ color:var(--ink); }
+  .stat-card .change.down{ color:var(--brand); }
+
+  .row-link{
+    display:flex; align-items:center; gap:14px; padding:15px 4px; border:none; background:none; width:100%;
+    text-align:left; font-family:inherit; cursor:pointer; border-bottom:1px solid var(--line); color:var(--ink);
+  }
+  .row-link:last-child{ border-bottom:none; }
+  .row-link .ic{ width:36px; height:36px; border-radius:10px; background:var(--brand-soft); color:var(--brand); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .row-link .ic svg{ width:18px; height:18px; }
+  .row-link .txt{ flex:1; }
+  .row-link .txt .t{ font-size:14px; font-weight:700; }
+  .row-link .txt .d{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .row-link .chev{ width:16px; height:16px; color:var(--ink-soft); flex-shrink:0; }
+  .row-link:hover{ background:var(--brand-soft); border-radius:10px; }
+  .row-link:focus-visible{ outline:2px solid var(--brand); outline-offset:-2px; border-radius:10px; }
+
+  .tx-day{ font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:20px 0 8px; text-transform:uppercase; letter-spacing:0.03em; }
+  .tx-day:first-child{ margin-top:0; }
+  .tx-row{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); }
+  .tx-row:last-child{ border-bottom:none; }
+  .tx-ic{ width:38px; height:38px; border-radius:10px; background:var(--brand-soft); color:var(--brand); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .tx-ic svg{ width:18px; height:18px; }
+  .tx-mid{ flex:1; min-width:0; }
+  .tx-mid .t{ font-size:13.5px; font-weight:700; }
+  .tx-mid .d{ font-size:11.5px; color:var(--ink-soft); margin-top:2px; }
+  .tx-amt{ font-size:14.5px; font-weight:800; flex-shrink:0; }
+
+  .segctrl{ display:flex; background:var(--brand-soft); border-radius:12px; padding:4px; gap:2px; }
+  .segctrl button{ flex:1; border:none; background:transparent; padding:11px; border-radius:9px; font-family:inherit; font-size:13.5px; font-weight:700; color:var(--ink-soft); cursor:pointer; }
+  .segctrl button.active{ background:var(--paper-raised); color:var(--brand); box-shadow:0 1px 4px var(--shadow); }
+  .segctrl button:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
+
+  .field-label{ font-size:13px; font-weight:700; color:var(--ink); margin:22px 0 10px; display:flex; justify-content:space-between; align-items:center; }
+  .field-label:first-child{ margin-top:0; }
+  .chiprow{ display:flex; flex-wrap:wrap; gap:8px; }
+  .slider-wrap{ padding:6px 2px; }
+  input[type="range"]{ width:100%; accent-color:var(--brand); height:4px; cursor:pointer; }
+  .slider-nums{ display:flex; justify-content:space-between; font-size:11px; color:var(--ink-soft); margin-top:4px; }
+  .preview-box{ background:var(--brand-soft); border-radius:14px; padding:18px 20px; margin-top:22px; }
+  .preview-box .t1{ font-size:14.5px; font-weight:700; color:var(--brand-deep); line-height:1.5; }
+  .preview-box .t2{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
+
+  .chart-wrap{ background:var(--paper-raised); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .chart-legend{ display:flex; gap:16px; font-size:11.5px; color:var(--ink-soft); margin-top:10px; }
+  .chart-legend .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
+
+  .track-progress{ display:flex; gap:5px; margin:16px 0 4px; }
+  .track-progress .seg{ flex:1; height:6px; border-radius:99px; background:var(--line-strong); }
+  .track-progress .seg.done{ background:var(--accent-green); }
+  .track-progress .seg.now{ background:var(--accent-yellow); }
+
+  .cat-row{ display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
+  .cat-row:last-child{ border-bottom:none; }
+  .cat-row .name{ font-weight:600; display:flex; align-items:center; gap:9px; }
+  .cat-row .name .sw{ width:8px; height:8px; border-radius:50%; }
+
+  .onboard-illo{ height:200px; border-radius:18px; background: linear-gradient(135deg, var(--brand-soft), var(--accent-pink-soft)); display:flex; align-items:center; justify-content:center; margin-bottom:26px; position:relative; overflow:hidden; }
+  .onboard-illo svg{ width:88px; height:88px; color:var(--brand); }
+  .dots{ display:flex; gap:6px; justify-content:center; margin-top:22px; }
+  .dots span{ width:6px; height:6px; border-radius:50%; background:var(--line-strong); }
+  .dots span.active{ background:var(--brand); width:18px; border-radius:99px; }
+
+  .reset-card{ border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin-top:12px; cursor:pointer; transition:border-color .15s, background .15s; background:var(--paper-raised); }
+  .reset-card:hover{ border-color:var(--brand); background:var(--brand-soft); }
+  .reset-card.chosen{ border-color:var(--brand); background:var(--brand-soft); }
+  .reset-card .t{ font-size:13.5px; font-weight:700; margin-bottom:4px; }
+  .reset-card .d{ font-size:12px; color:var(--ink-soft); line-height:1.5; }
+
+  .result-hero{ text-align:center; padding:30px 20px; }
+  .result-hero .ic{ width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+  .result-hero.win .ic{ background:var(--accent-green-soft); color:var(--accent-green); }
+  .result-hero.lose .ic{ background: color-mix(in srgb, var(--ink) 8%, transparent); color:var(--ink); }
+  .result-hero .ic svg{ width:28px; height:28px; }
+  .result-hero h2{ font-family:var(--font-kr); font-size:21px; margin:0 0 8px; font-weight:800; }
+  .result-hero p{ font-size:13.5px; color:var(--ink-soft); margin:0; line-height:1.6; }
+  .result-compare{ display:flex; gap:12px; margin-top:20px; }
+  .result-compare .box{ flex:1; background:var(--paper-raised); border:1px solid var(--line); border-radius:12px; padding:14px; text-align:center; }
+  .result-compare .box .l{ font-size:11.5px; color:var(--ink-soft); font-weight:600; }
+  .result-compare .box .v{ font-size:19px; font-weight:800; margin-top:4px; }
+
+  .sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+</style>
+
+<!-- shared icon defs -->
+<svg width="0" height="0" style="position:absolute">
+<defs>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 8h6M9 12h6M9 16h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M4 16 9.5 10.2l4 3.8L20 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 6h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 21V4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M6 4.5h12l-3 4 3 4H6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M7 8h10l1 12H6L7 8Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-cup" viewBox="0 0 24 24"><path d="M5 8h11v6a5.5 5.5 0 0 1-5.5 5.5h0A5.5 5.5 0 0 1 5 14V8Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 9.5h1.5a2 2 0 0 1 0 4H16" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 21 19H3L12 4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16.6" r="0.9" fill="currentColor"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 12.5 10.7 15 16 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sad" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 15.5c1-1.2 6-1.2 7 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="10" r="0.9" fill="currentColor"/><circle cx="15" cy="10" r="0.9" fill="currentColor"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9.5 5.2 4h13.6L20 9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M5 9.5V20h14V9.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+</defs>
+</svg>
+
+<div class="page">
+
+  <div class="meta">
+    <div class="meta-brand"><span class="mark">다짐</span><span class="sub">UI 프로토타입 · 소비 습관 예측 &amp; 목표 코칭</span></div>
+    <div class="seg" role="group" aria-label="디바이스 전환">
+      <button id="devDesktop" class="active" onclick="setDevice('desktop')">노트북 보기</button>
+      <button id="devMobile" onclick="setDevice('mobile')">iPhone 보기</button>
+    </div>
+    <div class="jump" id="jumpRow" role="group" aria-label="화면 이동"></div>
+  </div>
+
+  <div class="stage-wrap">
+
+    <!-- ============== DESKTOP STAGE ============== -->
+    <div class="stage active" id="stageDesktop">
+      <div class="browser">
+        <div class="chrome">
+          <div class="traffic"><span></span><span></span><span></span></div>
+          <div class="urlbar">app.dajim.co.kr</div>
+        </div>
+        <div class="app">
+          <nav class="rail">
+            <div class="rail-brand">다짐<small>DAJIM · 소비 습관 코칭</small></div>
+            <div class="rail-user">
+              <div class="avatar">지은</div>
+              <div><div class="name">김지은님</div><div class="desc">28세 · 다짐 42일째</div></div>
+            </div>
+            <div class="rail-nav" id="railNav"></div>
+            <div class="rail-foot">연결 계좌 2개<br>카카오뱅크 · 신한카드</div>
+          </nav>
+          <div class="canvas" id="dCanvas"><!-- screens injected --></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== MOBILE STAGE ============== -->
+    <div class="stage" id="stageMobile">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><span>다짐</span><span>100%</span></div>
+          <div class="m-scroll" id="mCanvas"><!-- screens injected --></div>
+          <nav class="tabbar" id="tabbarNav"></nav>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ================= data & copy (shared source of truth) ================= */
+const SCREENS = [
+  {id:'onboard',  label:'온보딩',        icon:'i-home'},
+  {id:'home',     label:'홈',            icon:'i-home'},
+  {id:'spending', label:'나의 소비',      icon:'i-receipt'},
+  {id:'goal',     label:'목표 설정',      icon:'i-target'},
+  {id:'scenario', label:'예측 시나리오',  icon:'i-trend'},
+  {id:'tracking', label:'소비 트래킹',    icon:'i-trend'},
+  {id:'result',   label:'결과 확인',      icon:'i-flag'},
+];
+const TABS = ['home','spending','goal','tracking','result']; // real in-app nav (5)
+
+let state = { device:'desktop', screen:'home', scenario:'neg', result:'win', goalPct:20, goalUnit:'pct' };
+
+/* ---------- top meta controls ---------- */
+function buildMeta(){
+  const jump = document.getElementById('jumpRow');
+  jump.innerHTML = SCREENS.map(s=>`<button data-jump="${s.id}" onclick="goto('${s.id}')">${s.label}</button>`).join('');
+}
+
+/* ---------- desktop rail / mobile tabbar (only 5 real tabs) ---------- */
+function buildNavs(){
+  const rail = document.getElementById('railNav');
+  rail.innerHTML = TABS.map(id=>{
+    const s = SCREENS.find(x=>x.id===id);
+    return `<button data-nav="${id}" onclick="goto('${id}')"><svg class="icon"><use href="#${s.icon}"/></svg>${s.label}</button>`;
+  }).join('');
+  const tabbar = document.getElementById('tabbarNav');
+  tabbar.innerHTML = TABS.map(id=>{
+    const s = SCREENS.find(x=>x.id===id);
+    return `<button data-nav="${id}" onclick="goto('${id}')"><svg class="icon"><use href="#${s.icon}"/></svg>${s.label}</button>`;
+  }).join('');
+}
+
+function setDevice(d){
+  state.device = d;
+  document.getElementById('devDesktop').classList.toggle('active', d==='desktop');
+  document.getElementById('devMobile').classList.toggle('active', d==='mobile');
+  document.getElementById('stageDesktop').classList.toggle('active', d==='desktop');
+  document.getElementById('stageMobile').classList.toggle('active', d==='mobile');
+}
+
+function goto(id){
+  state.screen = id;
+  document.querySelectorAll('#jumpRow button').forEach(b=>b.classList.toggle('active', b.dataset.jump===id));
+  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active', b.dataset.nav===id));
+  render();
+  document.getElementById(state.device==='desktop'?'dCanvas':'mCanvas').scrollTop = 0;
+}
+
+/* ================= content templates ================= */
+function onboardContent(){
+  return `
+  <div class="onboard-illo"><svg viewBox="0 0 24 24"><use href="#i-target"/></svg></div>
+  <div class="eyebrow">다짐이 하는 일</div>
+  <h2 style="font-size:24px; margin:8px 0 10px; line-height:1.4; font-weight:800;">이번 달도 다짐만으로<br>끝났다면</h2>
+  <p style="font-size:14px; line-height:1.7; color:var(--ink-soft); margin:0;">연결한 계좌의 소비 데이터를 바탕으로, 지금 습관을 유지했을 때 한 달 뒤 어떻게 될지 먼저 보여드려요. 목표를 정하면 며칠마다 결과로 확인시켜드립니다.</p>
+  <div class="dots"><span class="active"></span><span></span><span></span></div>
+  <div style="margin-top:28px; display:flex; flex-direction:column; gap:10px;">
+    <button class="btn primary" style="justify-content:center;" onclick="goto('home')">계좌 연결하고 시작하기</button>
+    <button class="btn ghost" style="justify-content:center; border-color:transparent;" onclick="goto('home')">나중에 할게요</button>
+  </div>`;
+}
+
+function predictCardHTML(mode){
+  if(mode==='neg'){
+    return `<div class="predict-card neg">
+      <div class="icon-badge"><svg class="icon" style="width:18px;height:18px;"><use href="#i-alert"/></svg></div>
+      <p class="lead">지금처럼 배달음식 소비를 지속하다가는 1개월 이내로 이번 달 저축 목표(32만원) 달성이 어려워질 것으로 예측돼요.</p>
+      <div class="metric">배달음식 지출 전월 대비 <span class="num">+28%</span></div>
+      <div class="predict-note">최근 3개월 소비 패턴 기반 예측이에요.</div>
+    </div>`;
+  }
+  return `<div class="predict-card pos">
+      <div class="icon-badge"><svg class="icon" style="width:18px;height:18px;"><use href="#i-check"/></svg></div>
+      <p class="lead">배달음식을 주 1회로 줄이면 이번 달 소비량이 전월 대비 18% 감소해요. 저축 목표(32만원) 달성이 가능해요.</p>
+      <div class="metric">예상 이번 달 소비 전월 대비 <span class="num">-18%</span></div>
+      <div class="predict-note">최근 3개월 소비 패턴 기반 예측이에요.</div>
+    </div>`;
+}
+
+function homeContent(desktop){
+  const stats = `
+    <div class="card stat-card"><div class="label">이번 달 총 지출</div><div class="value num">812,400원</div><div class="change up">전월 동기간 대비 +15%</div></div>
+    <div class="card stat-card"><div class="label">목표 진행률</div><div class="value num">32%</div><div class="change">배달음식 20%↓ · 3개월 목표</div></div>
+    <div class="card stat-card"><div class="label">다음 트래킹까지</div><div class="value num">D-3</div><div class="change">7일 주기 · 2회차</div></div>`;
+  const links = `
+    <div class="card" style="padding:6px 16px;">
+      <button class="row-link" onclick="goto('spending')"><span class="ic"><svg class="icon"><use href="#i-receipt"/></svg></span><span class="txt"><div class="t">나의 소비 확인</div><div class="d">통장별 · 날짜별 지출 내역 보기</div></span><svg class="chev"><use href="#i-chev"/></svg></button>
+      <button class="row-link" onclick="goto('goal')"><span class="ic"><svg class="icon"><use href="#i-target"/></svg></span><span class="txt"><div class="t">목표 설정</div><div class="d">기간 · 감소율 · 트래킹 주기 정하기</div></span><svg class="chev"><use href="#i-chev"/></svg></button>
+      <button class="row-link" onclick="goto('tracking')"><span class="ic"><svg class="icon"><use href="#i-trend"/></svg></span><span class="txt"><div class="t">소비 트래킹</div><div class="d">주기별 분석 리포트 확인</div></span><svg class="chev"><use href="#i-chev"/></svg></button>
+      <button class="row-link" onclick="goto('result')"><span class="ic"><svg class="icon"><use href="#i-flag"/></svg></span><span class="txt"><div class="t">결과 확인</div><div class="d">달성 여부 및 다음 다짐 추천</div></span><svg class="chev"><use href="#i-chev"/></svg></button>
+    </div>`;
+  if(desktop){
+    return `
+    <div class="canvas-head"><div><h1>지은님, 오늘도 다짐과 함께해요</h1><div class="date">8월 6일 목요일</div></div><span class="pill streak">다짐 42일째</span></div>
+    <div class="bento">
+      <div class="bento-full" onclick="goto('scenario')" style="cursor:pointer;">${predictCardHTML('neg')}</div>
+      ${stats}
+      <div class="bento-full">${links}</div>
+    </div>`;
+  }
+  return `
+  <div class="m-head"><h1>지은님, 오늘도 다짐과<br>함께해요</h1><div class="date">8월 6일 목요일</div></div>
+  <div onclick="goto('scenario')">${predictCardHTML('neg')}</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;">
+    <div class="card stat-card"><div class="label">이번 달 지출</div><div class="value num" style="font-size:19px;">812,400원</div><div class="change up">+15%</div></div>
+    <div class="card stat-card"><div class="label">목표 진행률</div><div class="value num" style="font-size:19px;">32%</div><div class="change">D-3 · 2회차</div></div>
+  </div>
+  <div class="card" style="padding:2px 14px; margin-top:14px;">${links.replace('<div class="card" style="padding:6px 16px;">','').replace(/<\/div>$/,'')}</div>`;
+}
+
+function spendingContent(desktop){
+  const rows = (list)=>list.map(t=>`
+    <div class="tx-row"><span class="tx-ic"><svg class="icon"><use href="#${t.ic}"/></svg></span>
+      <div class="tx-mid"><div class="t">${t.name}</div><div class="d">${t.time} · ${t.cat}</div></div>
+      <div class="tx-amt">-${t.amt}</div></div>`).join('');
+  const body = `
+    <div class="card" style="padding:20px 22px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+      <div><div style="font-size:12.5px; color:var(--ink-soft); font-weight:600;">이번 달 총 지출</div><div class="value num" style="font-size:24px; font-weight:800; margin-top:4px;">812,400원</div></div>
+      <span class="pill warn">전월 대비 +15%</span>
+    </div>
+    <div class="chiprow" style="margin-bottom:8px;">
+      <span class="chip selected">전체</span><span class="chip">카카오뱅크</span><span class="chip">신한카드</span>
+    </div>
+    <div class="card" style="padding:6px 20px 14px; margin-top:10px;">
+      <div class="tx-day">8월 6일 목요일</div>
+      ${rows([{ic:'i-bag',name:'배달의민족',time:'저녁 8:42',cat:'배달음식',amt:'18,500원'},{ic:'i-cup',name:'스타벅스',time:'오후 3:10',cat:'카페',amt:'6,500원'}])}
+      <div class="tx-day">8월 5일 수요일</div>
+      ${rows([{ic:'i-store',name:'쿠팡',time:'오전 11:20',cat:'쇼핑',amt:'34,900원'},{ic:'i-bag',name:'요기요',time:'저녁 7:55',cat:'배달음식',amt:'21,000원'}])}
+      <div class="tx-day">8월 4일 화요일</div>
+      ${rows([{ic:'i-card',name:'신한카드 자동이체',time:'오전 9:00',cat:'구독서비스',amt:'13,900원'},{ic:'i-store',name:'GS25',time:'오후 1:15',cat:'편의점',amt:'8,200원'}])}
+    </div>`;
+  if(desktop) return `<div class="canvas-head"><div><h1>나의 소비 확인</h1><div class="date">토스처럼, 통장별 · 시간별로 한눈에</div></div></div>${body}`;
+  return `<div class="m-head"><h1>나의 소비 확인</h1><div class="date">통장별 · 시간별 내역</div></div>${body}`;
+}
+
+function goalContent(desktop){
+  const per100 = 186000 * (state.goalPct/100);
+  const body = `
+    <div class="field-label">어떤 소비를 줄일까요</div>
+    <div class="chiprow"><span class="chip selected">배달음식</span><span class="chip">카페</span><span class="chip">쇼핑</span><span class="chip">구독서비스</span></div>
+
+    <div class="field-label">기간</div>
+    <div class="chiprow"><span class="chip">1개월</span><span class="chip">2개월</span><span class="chip selected">3개월</span><span class="chip">6개월</span></div>
+
+    <div class="field-label">얼마나 줄일까요<span class="pill neutral num">${state.goalPct}%</span></div>
+    <div class="slider-wrap"><input type="range" min="5" max="50" step="1" value="${state.goalPct}" oninput="onGoalSlide(this.value)"><div class="slider-nums"><span>5%</span><span>50%</span></div></div>
+
+    <div class="field-label">얼마나 자주 확인할까요</div>
+    <div class="chiprow"><span class="chip">3일마다</span><span class="chip selected">7일마다</span><span class="chip">14일마다</span></div>
+
+    <div class="preview-box">
+      <div class="t1">배달음식 소비를 3개월간 <span class="num">${state.goalPct}%</span> 줄이고, 7일마다 확인할게요.</div>
+      <div class="t2">이번 달 배달음식 지출(186,000원) 기준 예상 절감액 약 <span class="num">${Math.round(per100).toLocaleString()}원</span></div>
+    </div>
+    <button class="btn accent" style="width:100%; justify-content:center; margin-top:20px;" onclick="goto('scenario')">다짐 시작하기</button>`;
+  if(desktop) return `<div class="canvas-head"><div><h1>목표 설정</h1><div class="date">개선 수준을 직접 정하면, 예측도 함께 바뀌어요</div></div></div><div class="card" style="padding:26px 30px; max-width:560px;">${body}</div>`;
+  return `<div class="m-head"><h1>목표 설정</h1><div class="date">개선 수준을 직접 정해보세요</div></div>${body}`;
+}
+function onGoalSlide(v){
+  state.goalPct = Number(v);
+  render();
+}
+
+function scenarioContent(desktop){
+  const seg = `<div class="segctrl">
+    <button class="${state.scenario==='neg'?'active':''}" onclick="setScenario('neg')">이대로 유지하면</button>
+    <button class="${state.scenario==='pos'?'active':''}" onclick="setScenario('pos')">목표를 달성하면</button>
+  </div>`;
+  const chart = state.scenario==='neg' ? sparkline([34,38,42,45,52,58,64],'var(--ink)') : sparkline([64,58,50,44,40,35,30],'var(--brand)');
+  const body = `${seg}
+    <div style="margin-top:18px;">${predictCardHTML(state.scenario)}</div>
+    <div class="chart-wrap" style="margin-top:16px;">
+      <div style="font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:8px;">배달음식 소비 추이 (최근 7주 · 예측 포함)</div>
+      ${chart}
+    </div>
+    <button class="btn accent" style="width:100%; justify-content:center; margin-top:18px;" onclick="goto('goal')">이 목표로 다짐하기</button>`;
+  if(desktop) return `<div class="canvas-head"><div><h1>예측 시나리오</h1><div class="date">지금 습관을 유지하면 vs 목표를 달성하면</div></div></div><div style="max-width:600px;">${body}</div>`;
+  return `<div class="m-head"><h1>예측 시나리오</h1><div class="date">두 가지 미래를 미리 보여드려요</div></div>${body}`;
+}
+function setScenario(m){ state.scenario=m; render(); }
+
+function sparkline(values, color){
+  const w=520,h=90,max=Math.max(...values),min=Math.min(...values);
+  const pts = values.map((v,i)=>{
+    const x = (i/(values.length-1))*w;
+    const y = h - ((v-min)/(max-min||1))*(h-14) - 7;
+    return `${x},${y}`;
+  }).join(' ');
+  const last = pts.split(' ').pop().split(',');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%; height:90px; overflow:visible;">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="4.5" fill="${color}"/>
+  </svg>`;
+}
+
+function trackingContent(desktop){
+  const chart = sparklineDual();
+  const body = `
+    <div class="card" style="padding:18px 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div><div style="font-weight:700; font-size:14.5px;">7일마다 확인하는 다짐 리포트</div><div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">다음 확인까지 D-3 · 2회차 진행 중</div></div>
+        <span class="pill good">목표 초과 달성 중</span>
+      </div>
+      <div class="track-progress"><div class="seg done"></div><div class="seg now"></div><div class="seg"></div><div class="seg"></div></div>
+    </div>
+    <div class="chart-wrap" style="margin-top:14px;">
+      <div style="font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px;">목표선 대비 실제 소비</div>
+      ${chart}
+      <div class="chart-legend"><span><span class="dot" style="background:var(--line-strong)"></span>목표선</span><span><span class="dot" style="background:var(--brand)"></span>실제 소비</span></div>
+    </div>
+    <div class="card" style="padding:16px 20px; margin-top:14px;">
+      <div style="font-size:13.5px; font-weight:700; margin-bottom:8px;">이번 7일간 배달음식 소비 <span class="num" style="color:var(--brand);">-22%</span>, 목표(-20%)보다 잘 하고 있어요.</div>
+      <div class="cat-row"><span class="name"><span class="sw" style="background:var(--brand)"></span>배달음식</span><span class="num" style="color:var(--brand); font-weight:700;">-22%</span></div>
+      <div class="cat-row"><span class="name"><span class="sw" style="background:var(--ink)"></span>카페</span><span class="num" style="color:var(--ink); font-weight:700;">+5%</span></div>
+      <div class="cat-row"><span class="name"><span class="sw" style="background:var(--brand)"></span>쇼핑</span><span class="num" style="color:var(--brand); font-weight:700;">-3%</span></div>
+      <div class="cat-row"><span class="name"><span class="sw" style="background:var(--ink-soft)"></span>구독서비스</span><span class="num">0%</span></div>
+    </div>`;
+  if(desktop) return `<div class="canvas-head"><div><h1>소비 트래킹</h1><div class="date">설정한 주기마다 자동으로 분석해드려요</div></div></div><div style="max-width:600px;">${body}</div>`;
+  return `<div class="m-head"><h1>소비 트래킹</h1><div class="date">주기별 분석 리포트</div></div>${body}`;
+}
+function sparklineDual(){
+  const goalLine=[100,96,92,88,84,80,76,72], actual=[100,94,89,80,74,66,58,52];
+  const w=520,h=100,max=100,min=45;
+  const toPts=(arr)=>arr.map((v,i)=>{ const x=(i/(arr.length-1))*w; const y=h-((v-min)/(max-min))*(h-14)-7; return `${x},${y}`; }).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%; height:100px; overflow:visible;">
+    <polyline points="${toPts(goalLine)}" fill="none" stroke="var(--line-strong)" stroke-width="2" stroke-dasharray="5 5"/>
+    <polyline points="${toPts(actual)}" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function resultContent(desktop){
+  const seg = `<div class="segctrl">
+    <button class="${state.result==='win'?'active':''}" onclick="setResult('win')">달성 예시</button>
+    <button class="${state.result==='lose'?'active':''}" onclick="setResult('lose')">실패 예시</button>
+  </div>`;
+  let body;
+  if(state.result==='win'){
+    body = `
+    <div class="card result-hero win"><div class="ic"><svg class="icon" style="width:26px;height:26px;"><use href="#i-check"/></svg></div>
+      <h2>3개월간의 다짐, 완주했어요</h2><p>배달음식 소비를 목표보다 더 줄였고, 이번 달 저축 목표도 달성했어요.</p>
+      <div class="result-compare"><div class="box"><div class="l">목표</div><div class="v num">-20%</div></div><div class="box"><div class="l">실제</div><div class="v num" style="color:var(--brand);">-24%</div></div><div class="box"><div class="l">절감액</div><div class="v num">46,800원</div></div></div>
+    </div>
+    <div class="card" style="padding:18px 20px; margin-top:14px;">
+      <div style="font-size:13.5px; font-weight:700; margin-bottom:6px;">다음 다짐을 추천해요</div>
+      <div class="reset-card chosen"><div class="t">카페 소비 15% 줄이기 · 2개월</div><div class="d">최근 두 달간 카페 지출이 꾸준히 늘고 있어요. 이번엔 카페로 다짐해볼까요?</div></div>
+    </div>
+    <button class="btn accent" style="width:100%; justify-content:center; margin-top:16px;" onclick="goto('goal')">다음 다짐 시작하기</button>`;
+  } else {
+    body = `
+    <div class="card result-hero lose"><div class="ic"><svg class="icon" style="width:26px;height:26px;"><use href="#i-sad"/></svg></div>
+      <h2>목표에는 못 미쳤지만,<br>시작한 것만으로 의미 있어요</h2><p>배달음식 소비가 예상보다 줄지 않았어요. 방법을 조금 바꿔서 다시 다짐해볼까요?</p>
+      <div class="result-compare"><div class="box"><div class="l">목표</div><div class="v num">-20%</div></div><div class="box"><div class="l">실제</div><div class="v num" style="color:var(--ink);">-6%</div></div><div class="box"><div class="l">절감액</div><div class="v num">11,200원</div></div></div>
+    </div>
+    <div style="margin-top:16px;">
+      <div style="font-size:13.5px; font-weight:700; margin-bottom:4px;">목표 재설정을 추천해요</div>
+      <div class="reset-card"><div class="t">기간을 2개월 더 연장하기</div><div class="d">급하게 줄이기보다, 천천히 습관을 만들어가는 방법이에요.</div></div>
+      <div class="reset-card chosen"><div class="t">목표를 20% → 12%로 완화하기</div><div class="d">달성 가능한 수준부터 시작하면 다음 다짐이 더 쉬워져요.</div></div>
+      <div class="reset-card"><div class="t">배달음식 대신 구독서비스 줄이기</div><div class="d">최근 구독서비스 지출이 늘었어요. 카테고리를 바꿔볼 수 있어요.</div></div>
+    </div>
+    <button class="btn accent" style="width:100%; justify-content:center; margin-top:16px;" onclick="goto('goal')">이 방법으로 다시 다짐하기</button>`;
+  }
+  if(desktop) return `<div class="canvas-head"><div><h1>결과 확인</h1><div class="date">목표 기간이 끝나면 다짐이 알려드려요</div></div></div><div style="max-width:520px;">${seg}<div style="margin-top:16px;">${body}</div></div>`;
+  return `<div class="m-head"><h1>결과 확인</h1><div class="date">목표 기간이 끝났어요</div></div>${seg}<div style="margin-top:14px;">${body}</div>`;
+}
+function setResult(m){ state.result=m; render(); }
+
+const CONTENT = {
+  onboard: (d)=>onboardContent(),
+  home: homeContent,
+  spending: spendingContent,
+  goal: goalContent,
+  scenario: scenarioContent,
+  tracking: trackingContent,
+  result: resultContent,
+};
+
+function render(){
+  document.getElementById('dCanvas').innerHTML = CONTENT[state.screen](true);
+  document.getElementById('mCanvas').innerHTML = CONTENT[state.screen](false);
+}
+
+buildMeta();
+buildNavs();
+goto('home');
+setDevice('desktop');
+</script>
