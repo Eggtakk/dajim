@@ -1,37 +1,54 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Pill } from "@/components/ui/Pill";
-import { getTransactions, getHomeSummary } from "@/lib/mockData";
+import { fetchHomeSummary, fetchTransactions } from "@/lib/api";
 import { formatPct, formatWon } from "@/lib/format";
+import type { HomeSummary, Transaction } from "@/lib/types";
 
 const ACCOUNTS = ["전체", "카카오뱅크", "신한카드"] as const;
 
 export default function SpendingPage() {
   const [account, setAccount] = useState<(typeof ACCOUNTS)[number]>("전체");
-  const summary = getHomeSummary();
-  const transactions = getTransactions();
-
-  const filtered = useMemo(
-    () =>
-      account === "전체"
-        ? transactions
-        : transactions.filter((t) => t.account === account),
-    [account, transactions],
+  const [summary, setSummary] = useState<HomeSummary | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[] | null>(
+    null,
   );
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchHomeSummary().then((data) => {
+      if (!cancelled) setSummary(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchTransactions(account === "전체" ? undefined : account).then(
+      (res) => {
+        if (!cancelled) setTransactions(res.transactions);
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [account]);
+
   const grouped = useMemo(() => {
-    const map = new Map<string, typeof filtered>();
-    for (const t of filtered) {
+    const map = new Map<string, Transaction[]>();
+    for (const t of transactions ?? []) {
       const list = map.get(t.day) ?? [];
       list.push(t);
       map.set(t.day, list);
     }
     return Array.from(map.entries());
-  }, [filtered]);
+  }, [transactions]);
 
   return (
     <>
@@ -56,11 +73,11 @@ export default function SpendingPage() {
             이번 달 총 지출
           </div>
           <div className="value num" style={{ fontSize: 24, fontWeight: 800, marginTop: 4 }}>
-            {formatWon(summary.totalSpendWon)}
+            {summary ? formatWon(summary.totalSpendWon) : "—"}
           </div>
         </div>
         <Pill tone="warn">
-          전월 대비 {formatPct(summary.totalSpendChangePct)}
+          전월 대비 {summary ? formatPct(summary.totalSpendChangePct) : "—"}
         </Pill>
       </Card>
 
@@ -73,7 +90,10 @@ export default function SpendingPage() {
       </div>
 
       <Card style={{ padding: "6px 20px 14px", marginTop: 10 }}>
-        {grouped.length === 0 && (
+        {transactions === null && (
+          <div className="empty-note">불러오는 중…</div>
+        )}
+        {transactions !== null && grouped.length === 0 && (
           <div className="empty-note">해당 통장의 내역이 없어요.</div>
         )}
         {grouped.map(([day, items]) => (

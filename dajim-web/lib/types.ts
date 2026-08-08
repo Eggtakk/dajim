@@ -28,14 +28,21 @@ export interface PredictionScenario {
   note: string;
 }
 
-export interface Transaction {
+export type Account = "카카오뱅크" | "신한카드";
+
+/** What a real open-banking/card feed gives us — no category yet. */
+export interface RawTransaction {
   id: string;
   merchant: string;
   day: string;
   time: string;
-  categoryId: CategoryId;
-  account: "카카오뱅크" | "신한카드";
+  account: Account;
   amountWon: number;
+}
+
+/** A RawTransaction after the classifier (lib/categorize.ts) has tagged it. */
+export interface Transaction extends RawTransaction {
+  categoryId: CategoryId;
   icon: string;
 }
 

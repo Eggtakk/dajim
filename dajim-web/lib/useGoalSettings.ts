@@ -1,16 +1,12 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import { DEFAULT_GOAL } from "./goal";
 import type { GoalSettings } from "./types";
 
 const STORAGE_KEY = "dajim:goal-settings";
 
-export const DEFAULT_GOAL: GoalSettings = {
-  categoryId: "delivery",
-  durationMonths: 3,
-  percent: 20,
-  trackingDays: 7,
-};
+export { DEFAULT_GOAL };
 
 /**
  * A tiny external store backed by localStorage, read via
