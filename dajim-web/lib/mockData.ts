@@ -16,6 +16,7 @@ import { formatPct, formatWon } from "./format";
 import { getWeeklySpendHistory } from "./historicalSpend";
 import { eulReul } from "./korean";
 import { predictCategoryTrend } from "./predictTrend";
+import { simulateGoalAchievement } from "./simulateGoal";
 import type {
   CategoryDelta,
   GoalSettings,
@@ -43,39 +44,55 @@ export function getHomeSummary(): HomeSummary {
   };
 }
 
+function getBaselineTrend(goal: GoalSettings) {
+  return predictCategoryTrend(getWeeklySpendHistory(goal.categoryId));
+}
+
 export function getPredictionScenario(
   mode: ScenarioMode,
   goal: GoalSettings,
 ): PredictionScenario {
   const category = getCategory(goal.categoryId);
+  const baseline = getBaselineTrend(goal);
 
   if (mode === "neg") {
-    const { trend, changePct } = predictCategoryTrend(
-      getWeeklySpendHistory(goal.categoryId),
-    );
     return {
       mode,
       lead: `지금처럼 ${category.label} 소비를 지속하다가는 1개월 이내로 이번 달 저축 목표(${formatWon(SAVING_GOAL_WON)}) 달성이 어려워질 것으로 예측돼요.`,
       metricLabel: `${category.label} 지출 전월 대비`,
-      metricValue: formatPct(changePct),
-      trend,
+      metricValue: formatPct(baseline.changePct),
+      trend: baseline.trend,
       note: "최근 8주 소비 패턴 기반 예측이에요.",
     };
   }
 
+  const simulation = simulateGoalAchievement(baseline, goal.percent, SAVING_GOAL_WON);
+  const direction = simulation.changePct <= 0 ? "감소" : "증가";
+  const achievability = simulation.goalAchievable
+    ? `저축 목표(${formatWon(SAVING_GOAL_WON)}) 달성이 가능해요.`
+    : `저축 목표(${formatWon(SAVING_GOAL_WON)})에는 ${formatWon(SAVING_GOAL_WON - simulation.savedWon)} 부족해요.`;
+
   return {
     mode,
-    lead: `${eulReul(category.label)} 주 1회로 줄이면 이번 달 소비량이 전월 대비 ${goal.percent}% 감소해요. 저축 목표(${formatWon(SAVING_GOAL_WON)}) 달성이 가능해요.`,
+    lead: `${eulReul(category.label)} 주 1회로 줄이면 이번 달 소비량이 전월 대비 ${Math.abs(simulation.changePct)}% ${direction}해요. ${achievability}`,
     metricLabel: "예상 이번 달 소비 전월 대비",
-    metricValue: `-${goal.percent}%`,
-    trend: [64, 58, 50, 44, 40, 35, 30],
-    note: "최근 3개월 소비 패턴 기반 예측이에요.",
+    metricValue: formatPct(simulation.changePct),
+    trend: simulation.trend,
+    note: "최근 8주 소비 패턴 기반 예측이에요.",
   };
 }
 
 export function getExpectedSavingWon(goal: GoalSettings): number {
-  const category = getCategory(goal.categoryId);
-  return category.thisMonthSpend * (goal.percent / 100);
+  const simulation = simulateGoalAchievement(
+    getBaselineTrend(goal),
+    goal.percent,
+    SAVING_GOAL_WON,
+  );
+  return simulation.savedWon;
+}
+
+export function getBaselineMonthSpendWon(goal: GoalSettings): number {
+  return getBaselineTrend(goal).projectedMonthWon;
 }
 
 export function getTrackingReport(goal: GoalSettings): TrackingReport {
