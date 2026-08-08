@@ -46,7 +46,7 @@ export default function TrackingPage() {
                   다음 확인까지 D-{report.daysUntilNext} · {report.cycleIndex}회차 진행 중
                 </div>
               </div>
-              <Pill tone="good">{report.statusLabel}</Pill>
+              <Pill tone={report.statusTone}>{report.statusLabel}</Pill>
             </div>
             <div className="track-progress">
               {Array.from({ length: report.totalCycles }, (_, i) => {

@@ -13,10 +13,17 @@
  */
 import { CATEGORIES, getCategory } from "./categories";
 import { formatPct, formatWon } from "./format";
+import { getGoalStartDate } from "./goalCycle";
 import { getWeeklySpendHistory } from "./historicalSpend";
 import { eulReul } from "./korean";
-import { predictCategoryTrend } from "./predictTrend";
+import { inferNow, predictCategoryTrend } from "./predictTrend";
 import { simulateGoalAchievement } from "./simulateGoal";
+import {
+  buildIndexSeries,
+  classifyTrackingStatus,
+  computeTrackingCycle,
+  computeTrackingWindowChangePct,
+} from "./trackingReport";
 import type {
   CategoryDelta,
   GoalSettings,
@@ -95,27 +102,40 @@ export function getBaselineMonthSpendWon(goal: GoalSettings): number {
   return getBaselineTrend(goal).projectedMonthWon;
 }
 
+const TRACKING_CHART_POINTS = 8;
+
 export function getTrackingReport(goal: GoalSettings): TrackingReport {
   const category = getCategory(goal.categoryId);
-  const otherCategories = CATEGORIES.filter((c) => c.id !== category.id);
-  const categoryDeltas: CategoryDelta[] = [
-    { categoryId: category.id, label: category.label, changePct: -22 },
-    ...otherCategories.map((c, i) => ({
-      categoryId: c.id,
-      label: c.label,
-      changePct: [5, -3, 0][i] ?? 0,
-    })),
-  ];
+  const history = getWeeklySpendHistory(goal.categoryId);
+  const now = inferNow(history);
+
+  const windowChangePct = computeTrackingWindowChangePct(history, goal.trackingDays);
+  const status = classifyTrackingStatus(windowChangePct, goal.percent);
+  const cycle = computeTrackingCycle(
+    getGoalStartDate(),
+    now,
+    goal.trackingDays,
+    goal.durationMonths,
+  );
+
+  const categoryDeltas: CategoryDelta[] = CATEGORIES.map((c) => ({
+    categoryId: c.id,
+    label: c.label,
+    changePct: computeTrackingWindowChangePct(getWeeklySpendHistory(c.id), goal.trackingDays),
+  }));
+
+  const comparisonWord = status.tone === "good" ? "잘" : "못";
 
   return {
-    cycleIndex: 2,
-    totalCycles: 4,
-    daysUntilNext: 3,
-    statusLabel: "목표 초과 달성 중",
-    goalSeries: [100, 96, 92, 88, 84, 80, 76, 72],
-    actualSeries: [100, 94, 89, 80, 74, 66, 58, 52],
+    cycleIndex: cycle.cycleIndex,
+    totalCycles: cycle.totalCycles,
+    daysUntilNext: cycle.daysUntilNext,
+    statusLabel: status.label,
+    statusTone: status.tone,
+    goalSeries: buildIndexSeries(goal.percent, TRACKING_CHART_POINTS),
+    actualSeries: buildIndexSeries(-windowChangePct, TRACKING_CHART_POINTS),
     categoryDeltas,
-    headline: `이번 ${goal.trackingDays}일간 ${category.label} 소비 -22%, 목표(-${goal.percent}%)보다 잘 하고 있어요.`,
+    headline: `이번 ${goal.trackingDays}일간 ${category.label} 소비 ${formatPct(windowChangePct)}, 목표(-${goal.percent}%)보다 ${comparisonWord} 하고 있어요.`,
   };
 }
 
