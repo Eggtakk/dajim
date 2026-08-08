@@ -12,8 +12,10 @@
  * lib/categorize.ts inside app/api/transactions/route.ts.
  */
 import { CATEGORIES, getCategory } from "./categories";
-import { formatWon } from "./format";
+import { formatPct, formatWon } from "./format";
+import { getWeeklySpendHistory } from "./historicalSpend";
 import { eulReul } from "./korean";
+import { predictCategoryTrend } from "./predictTrend";
 import type {
   CategoryDelta,
   GoalSettings,
@@ -46,20 +48,18 @@ export function getPredictionScenario(
   goal: GoalSettings,
 ): PredictionScenario {
   const category = getCategory(goal.categoryId);
-  const changePct = Math.round(
-    ((category.thisMonthSpend - category.lastMonthSpend) /
-      category.lastMonthSpend) *
-      100,
-  );
 
   if (mode === "neg") {
+    const { trend, changePct } = predictCategoryTrend(
+      getWeeklySpendHistory(goal.categoryId),
+    );
     return {
       mode,
       lead: `지금처럼 ${category.label} 소비를 지속하다가는 1개월 이내로 이번 달 저축 목표(${formatWon(SAVING_GOAL_WON)}) 달성이 어려워질 것으로 예측돼요.`,
       metricLabel: `${category.label} 지출 전월 대비`,
-      metricValue: `+${changePct}%`,
-      trend: [34, 38, 42, 45, 52, 58, 64],
-      note: "최근 3개월 소비 패턴 기반 예측이에요.",
+      metricValue: formatPct(changePct),
+      trend,
+      note: "최근 8주 소비 패턴 기반 예측이에요.",
     };
   }
 
