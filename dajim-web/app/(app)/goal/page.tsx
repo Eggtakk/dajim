@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { CATEGORIES, DURATION_OPTIONS, TRACKING_DAY_OPTIONS, getCategory } from "@/lib/categories";
 import { useGoalSettings } from "@/lib/useGoalSettings";
-import { getExpectedSavingWon } from "@/lib/mockData";
+import { getBaselineMonthSpendWon, getExpectedSavingWon } from "@/lib/mockData";
 import { formatWon } from "@/lib/format";
 
 export default function GoalPage() {
@@ -14,6 +14,7 @@ export default function GoalPage() {
   const { goal, setGoal } = useGoalSettings();
 
   const category = getCategory(goal.categoryId);
+  const baselineMonthSpend = getBaselineMonthSpendWon(goal);
   const expectedSaving = getExpectedSavingWon(goal);
 
   return (
@@ -91,7 +92,7 @@ export default function GoalPage() {
             일마다 확인할게요.
           </div>
           <div className="t2">
-            이번 달 {category.label} 지출({formatWon(category.thisMonthSpend)}) 기준
+            이번 달 예상 {category.label} 지출({formatWon(baselineMonthSpend)}) 기준
             예상 절감액 약 <span className="num">{formatWon(expectedSaving)}</span>
           </div>
         </div>

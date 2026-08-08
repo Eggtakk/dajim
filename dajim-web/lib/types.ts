@@ -4,10 +4,6 @@ export interface CategoryMeta {
   id: CategoryId;
   label: string;
   icon: string;
-  /** mock last-month spend in KRW, stands in for a real transactions aggregate */
-  lastMonthSpend: number;
-  /** mock month-to-date spend in KRW */
-  thisMonthSpend: number;
 }
 
 export interface GoalSettings {
