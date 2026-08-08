@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons/Icon";
@@ -7,9 +8,10 @@ import { PredictCard } from "@/components/PredictCard";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { useGoalSettings } from "@/lib/useGoalSettings";
-import { getHomeSummary, getPredictionScenario, getUser } from "@/lib/mockData";
+import { fetchHomeSummary, fetchPredictionScenario, fetchUser } from "@/lib/api";
 import { formatPct, formatWon } from "@/lib/format";
 import { getCategory } from "@/lib/categories";
+import type { HomeSummary, PredictionScenario } from "@/lib/types";
 
 const today = new Intl.DateTimeFormat("ko-KR", {
   month: "long",
@@ -47,10 +49,49 @@ const LINKS = [
 export default function HomePage() {
   const router = useRouter();
   const { goal } = useGoalSettings();
-  const user = getUser();
-  const summary = getHomeSummary();
-  const scenario = getPredictionScenario("neg", goal);
+  const [user, setUser] = useState<{
+    name: string;
+    age: number;
+    streakDays: number;
+  } | null>(null);
+  const [summary, setSummary] = useState<HomeSummary | null>(null);
+  const [scenario, setScenario] = useState<PredictionScenario | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchUser().then((data) => {
+      if (!cancelled) setUser(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchHomeSummary().then((data) => {
+      if (!cancelled) setSummary(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPredictionScenario("neg", goal).then((data) => {
+      if (!cancelled) setScenario(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [goal]);
+
   const category = getCategory(goal.categoryId);
+
+  if (!user || !summary || !scenario) {
+    return <p className="empty-note">불러오는 중…</p>;
+  }
 
   return (
     <>

@@ -1,21 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PredictCard } from "@/components/PredictCard";
 import { Sparkline } from "@/components/Sparkline";
 import { Button } from "@/components/ui/Button";
 import { useGoalSettings } from "@/lib/useGoalSettings";
-import { getPredictionScenario } from "@/lib/mockData";
+import { fetchPredictionScenario } from "@/lib/api";
 import { getCategory } from "@/lib/categories";
-import type { ScenarioMode } from "@/lib/types";
+import type { PredictionScenario, ScenarioMode } from "@/lib/types";
 
 export default function ScenarioPage() {
   const router = useRouter();
   const { goal } = useGoalSettings();
   const [mode, setMode] = useState<ScenarioMode>("neg");
+  const [scenario, setScenario] = useState<PredictionScenario | null>(null);
 
-  const scenario = getPredictionScenario(mode, goal);
+  useEffect(() => {
+    let cancelled = false;
+    fetchPredictionScenario(mode, goal).then((data) => {
+      if (!cancelled) setScenario(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, goal]);
+
   const category = getCategory(goal.categoryId);
 
   return (
@@ -43,14 +53,25 @@ export default function ScenarioPage() {
           </button>
         </div>
 
-        <div style={{ marginTop: 18 }}>
-          <PredictCard scenario={scenario} />
-        </div>
+        {scenario ? (
+          <>
+            <div style={{ marginTop: 18 }}>
+              <PredictCard scenario={scenario} />
+            </div>
 
-        <div className="chart-wrap" style={{ marginTop: 16 }}>
-          <div className="chart-title">{category.label} 소비 추이 (최근 7주 · 예측 포함)</div>
-          <Sparkline values={scenario.trend} color={mode === "neg" ? "ink" : "brand"} />
-        </div>
+            <div className="chart-wrap" style={{ marginTop: 16 }}>
+              <div className="chart-title">
+                {category.label} 소비 추이 (최근 7주 · 예측 포함)
+              </div>
+              <Sparkline
+                values={scenario.trend}
+                color={mode === "neg" ? "ink" : "brand"}
+              />
+            </div>
+          </>
+        ) : (
+          <p className="empty-note">불러오는 중…</p>
+        )}
 
         <Button
           variant="accent"

@@ -1,11 +1,15 @@
 /**
- * Mock data layer.
+ * Mock data layer, now called from the /api route handlers instead of
+ * directly from page components (see lib/api.ts for the client side).
  *
  * Every function here stands in for a future call to the prediction
  * algorithm / model backend. Signatures are shaped the way a real API
  * response would be (given the user's goal settings, return a scenario /
- * report / result) so that swapping the body for a `fetch()` call later
- * doesn't require touching any page component.
+ * report / result) so that swapping the body for a real computation later
+ * doesn't require touching any route handler or page component.
+ *
+ * Raw transactions live in lib/rawTransactions.ts and get categorized by
+ * lib/categorize.ts inside app/api/transactions/route.ts.
  */
 import { CATEGORIES, getCategory } from "./categories";
 import { formatWon } from "./format";
@@ -17,7 +21,6 @@ import type {
   PredictionScenario,
   ResultData,
   ScenarioMode,
-  Transaction,
   TrackingReport,
 } from "./types";
 
@@ -73,71 +76,6 @@ export function getPredictionScenario(
 export function getExpectedSavingWon(goal: GoalSettings): number {
   const category = getCategory(goal.categoryId);
   return category.thisMonthSpend * (goal.percent / 100);
-}
-
-export function getTransactions(): Transaction[] {
-  return [
-    {
-      id: "t1",
-      merchant: "배달의민족",
-      day: "8월 6일 목요일",
-      time: "저녁 8:42",
-      categoryId: "delivery",
-      account: "카카오뱅크",
-      amountWon: 18500,
-      icon: "i-bag",
-    },
-    {
-      id: "t2",
-      merchant: "스타벅스",
-      day: "8월 6일 목요일",
-      time: "오후 3:10",
-      categoryId: "cafe",
-      account: "신한카드",
-      amountWon: 6500,
-      icon: "i-cup",
-    },
-    {
-      id: "t3",
-      merchant: "쿠팡",
-      day: "8월 5일 수요일",
-      time: "오전 11:20",
-      categoryId: "shopping",
-      account: "신한카드",
-      amountWon: 34900,
-      icon: "i-store",
-    },
-    {
-      id: "t4",
-      merchant: "요기요",
-      day: "8월 5일 수요일",
-      time: "저녁 7:55",
-      categoryId: "delivery",
-      account: "카카오뱅크",
-      amountWon: 21000,
-      icon: "i-bag",
-    },
-    {
-      id: "t5",
-      merchant: "신한카드 자동이체",
-      day: "8월 4일 화요일",
-      time: "오전 9:00",
-      categoryId: "subscription",
-      account: "신한카드",
-      amountWon: 13900,
-      icon: "i-card",
-    },
-    {
-      id: "t6",
-      merchant: "GS25",
-      day: "8월 4일 화요일",
-      time: "오후 1:15",
-      categoryId: "shopping",
-      account: "신한카드",
-      amountWon: 8200,
-      icon: "i-store",
-    },
-  ];
 }
 
 export function getTrackingReport(goal: GoalSettings): TrackingReport {
