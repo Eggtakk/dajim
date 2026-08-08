@@ -85,6 +85,19 @@ function daysInMonth(date: Date): number {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
 }
 
+/**
+ * The "now" this history implies: the last elapsed day of its final
+ * (possibly partial) week. Other model modules (e.g. lib/trackingReport.ts)
+ * reuse this instead of wall-clock time so cycle math stays consistent with
+ * whichever mock/real history was passed in.
+ */
+export function inferNow(history: WeeklySpendPoint[]): Date {
+  if (history.length === 0) return new Date();
+  const last = history[history.length - 1];
+  const daysElapsed = Math.min(7, Math.max(1, last.daysElapsed));
+  return addUTCDays(parseISODate(last.weekStart), daysElapsed - 1);
+}
+
 export function predictCategoryTrend(history: WeeklySpendPoint[]): TrendPrediction {
   if (history.length === 0) {
     return { trend: [], projectedMonthWon: 0, lastMonthWon: 0, changePct: 0 };
@@ -108,7 +121,7 @@ export function predictCategoryTrend(history: WeeklySpendPoint[]): TrendPredicti
     blendedCurrentWeek,
   ].map((v) => Math.round(v));
 
-  const now = addUTCDays(parseISODate(current.weekStart), daysElapsed - 1);
+  const now = inferNow(history);
   const currentMonthKey = monthKey(now);
   const lastMonthKey = previousMonthKey(now);
 

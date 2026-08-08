@@ -62,6 +62,7 @@ export interface TrackingReport {
   totalCycles: number;
   daysUntilNext: number;
   statusLabel: string;
+  statusTone: "good" | "warn" | "neutral";
   goalSeries: number[];
   actualSeries: number[];
   categoryDeltas: CategoryDelta[];
