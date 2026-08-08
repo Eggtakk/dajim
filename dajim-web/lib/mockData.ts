@@ -12,6 +12,7 @@
  * lib/categorize.ts inside app/api/transactions/route.ts.
  */
 import { CATEGORIES, getCategory } from "./categories";
+import { estimateSavingsGoalWon } from "./estimateSavingsGoal";
 import { formatPct, formatWon } from "./format";
 import { getWeeklySpendHistory } from "./historicalSpend";
 import { eulReul } from "./korean";
@@ -26,8 +27,6 @@ import type {
   ScenarioMode,
   TrackingReport,
 } from "./types";
-
-const SAVING_GOAL_WON = 320000;
 
 export function getUser() {
   return { name: "김지은", age: 28, streakDays: 42 };
@@ -54,11 +53,12 @@ export function getPredictionScenario(
 ): PredictionScenario {
   const category = getCategory(goal.categoryId);
   const baseline = getBaselineTrend(goal);
+  const savingGoalWon = estimateSavingsGoalWon();
 
   if (mode === "neg") {
     return {
       mode,
-      lead: `지금처럼 ${category.label} 소비를 지속하다가는 1개월 이내로 이번 달 저축 목표(${formatWon(SAVING_GOAL_WON)}) 달성이 어려워질 것으로 예측돼요.`,
+      lead: `지금처럼 ${category.label} 소비를 지속하다가는 1개월 이내로 이번 달 저축 목표(${formatWon(savingGoalWon)}) 달성이 어려워질 것으로 예측돼요.`,
       metricLabel: `${category.label} 지출 전월 대비`,
       metricValue: formatPct(baseline.changePct),
       trend: baseline.trend,
@@ -66,11 +66,11 @@ export function getPredictionScenario(
     };
   }
 
-  const simulation = simulateGoalAchievement(baseline, goal.percent, SAVING_GOAL_WON);
+  const simulation = simulateGoalAchievement(baseline, goal.percent, savingGoalWon);
   const direction = simulation.changePct <= 0 ? "감소" : "증가";
   const achievability = simulation.goalAchievable
-    ? `저축 목표(${formatWon(SAVING_GOAL_WON)}) 달성이 가능해요.`
-    : `저축 목표(${formatWon(SAVING_GOAL_WON)})에는 ${formatWon(SAVING_GOAL_WON - simulation.savedWon)} 부족해요.`;
+    ? `저축 목표(${formatWon(savingGoalWon)}) 달성이 가능해요.`
+    : `저축 목표(${formatWon(savingGoalWon)})에는 ${formatWon(savingGoalWon - simulation.savedWon)} 부족해요.`;
 
   return {
     mode,
@@ -86,7 +86,7 @@ export function getExpectedSavingWon(goal: GoalSettings): number {
   const simulation = simulateGoalAchievement(
     getBaselineTrend(goal),
     goal.percent,
-    SAVING_GOAL_WON,
+    estimateSavingsGoalWon(),
   );
   return simulation.savedWon;
 }
