@@ -24,7 +24,12 @@ export interface PredictionScenario {
   note: string;
 }
 
-export type Account = "카카오뱅크" | "신한카드";
+/**
+ * Was a fixed "카카오뱅크" | "신한카드" union while transactions were
+ * hardcoded. Once a real feed (mock or Plaid Sandbox) can return any
+ * institution name, this has to be a plain string.
+ */
+export type Account = string;
 
 /** What a real open-banking/card feed gives us — no category yet. */
 export interface RawTransaction {

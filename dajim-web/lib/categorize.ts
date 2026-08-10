@@ -24,6 +24,10 @@ const RULES: CategoryRule[] = [
       "쿠팡이츠",
       "땡겨요",
       "배달",
+      "doordash",
+      "ubereats",
+      "uber eats",
+      "grubhub",
     ],
   },
   {
@@ -37,6 +41,10 @@ const RULES: CategoryRule[] = [
       "빽다방",
       "카페",
       "커피",
+      "starbucks",
+      "coffee",
+      "mcdonald",
+      "cafe",
     ],
   },
   {
@@ -49,6 +57,10 @@ const RULES: CategoryRule[] = [
       "멜론",
       "왓챠",
       "구독",
+      "netflix",
+      "spotify",
+      "youtube",
+      "subscription",
     ],
   },
   {
@@ -64,6 +76,10 @@ const RULES: CategoryRule[] = [
       "세븐일레븐",
       "마트",
       "편의점",
+      "amazon",
+      "walmart",
+      "target",
+      "uber",
     ],
   },
 ];
@@ -78,10 +94,10 @@ export interface ClassificationResult {
 }
 
 export function classifyMerchant(merchantName: string): ClassificationResult {
-  const name = merchantName.trim();
+  const name = merchantName.trim().toLowerCase();
   for (const rule of RULES) {
     const matchedKeyword = rule.keywords.find((keyword) =>
-      name.includes(keyword),
+      name.includes(keyword.toLowerCase()),
     );
     if (matchedKeyword) {
       return { categoryId: rule.categoryId, matchedKeyword };
