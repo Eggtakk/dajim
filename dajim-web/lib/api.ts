@@ -20,7 +20,8 @@ import type {
 async function getJSON<T>(url: string): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`${url} responded with ${res.status}`);
+    const body = await res.text().catch(() => "");
+    throw new Error(`${url} → ${res.status}${body ? `: ${body}` : ""}`);
   }
   return res.json() as Promise<T>;
 }

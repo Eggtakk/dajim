@@ -17,12 +17,17 @@ export default function SpendingPage() {
   const [transactions, setTransactions] = useState<Transaction[] | null>(
     null,
   );
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetchHomeSummary().then((data) => {
-      if (!cancelled) setSummary(data);
-    });
+    fetchHomeSummary()
+      .then((data) => {
+        if (!cancelled) setSummary(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
@@ -30,9 +35,13 @@ export default function SpendingPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchTransactions().then((res) => {
-      if (!cancelled) setTransactions(res.transactions);
-    });
+    fetchTransactions()
+      .then((res) => {
+        if (!cancelled) setTransactions(res.transactions);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
@@ -103,7 +112,16 @@ export default function SpendingPage() {
       </div>
 
       <Card style={{ padding: "6px 20px 14px", marginTop: 10 }}>
-        {transactions === null && (
+        {error && (
+          <div className="empty-note">
+            불러오지 못했어요: {error}
+            <br />
+            <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => location.reload()}>
+              다시 시도
+            </button>
+          </div>
+        )}
+        {!error && transactions === null && (
           <div className="empty-note">불러오는 중…</div>
         )}
         {transactions !== null && grouped.length === 0 && (
