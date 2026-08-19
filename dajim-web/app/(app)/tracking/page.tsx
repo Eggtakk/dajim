@@ -12,12 +12,17 @@ import type { TrackingReport } from "@/lib/types";
 export default function TrackingPage() {
   const { goal } = useGoalSettings();
   const [report, setReport] = useState<TrackingReport | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetchTrackingReport(goal).then((data) => {
-      if (!cancelled) setReport(data);
-    });
+    fetchTrackingReport(goal)
+      .then((data) => {
+        if (!cancelled) setReport(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
@@ -32,7 +37,15 @@ export default function TrackingPage() {
         </div>
       </div>
 
-      {!report ? (
+      {error ? (
+        <p className="empty-note">
+          불러오지 못했어요: {error}
+          <br />
+          <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => location.reload()}>
+            다시 시도
+          </button>
+        </p>
+      ) : !report ? (
         <p className="empty-note">불러오는 중…</p>
       ) : (
         <div>

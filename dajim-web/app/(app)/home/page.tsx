@@ -56,12 +56,17 @@ export default function HomePage() {
   } | null>(null);
   const [summary, setSummary] = useState<HomeSummary | null>(null);
   const [scenario, setScenario] = useState<PredictionScenario | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetchUser().then((data) => {
-      if (!cancelled) setUser(data);
-    });
+    fetchUser()
+      .then((data) => {
+        if (!cancelled) setUser(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
@@ -69,9 +74,13 @@ export default function HomePage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchHomeSummary().then((data) => {
-      if (!cancelled) setSummary(data);
-    });
+    fetchHomeSummary()
+      .then((data) => {
+        if (!cancelled) setSummary(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
@@ -79,9 +88,13 @@ export default function HomePage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchPredictionScenario("neg", goal).then((data) => {
-      if (!cancelled) setScenario(data);
-    });
+    fetchPredictionScenario("neg", goal)
+      .then((data) => {
+        if (!cancelled) setScenario(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
@@ -89,6 +102,17 @@ export default function HomePage() {
 
   const category = getCategory(goal.categoryId);
 
+  if (error) {
+    return (
+      <p className="empty-note">
+        불러오지 못했어요: {error}
+        <br />
+        <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => location.reload()}>
+          다시 시도
+        </button>
+      </p>
+    );
+  }
   if (!user || !summary || !scenario) {
     return <p className="empty-note">불러오는 중…</p>;
   }

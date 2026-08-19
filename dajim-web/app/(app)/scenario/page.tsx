@@ -15,12 +15,17 @@ export default function ScenarioPage() {
   const { goal } = useGoalSettings();
   const [mode, setMode] = useState<ScenarioMode>("neg");
   const [scenario, setScenario] = useState<PredictionScenario | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetchPredictionScenario(mode, goal).then((data) => {
-      if (!cancelled) setScenario(data);
-    });
+    fetchPredictionScenario(mode, goal)
+      .then((data) => {
+        if (!cancelled) setScenario(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
@@ -53,7 +58,15 @@ export default function ScenarioPage() {
           </button>
         </div>
 
-        {scenario ? (
+        {error ? (
+          <p className="empty-note">
+            불러오지 못했어요: {error}
+            <br />
+            <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => location.reload()}>
+              다시 시도
+            </button>
+          </p>
+        ) : scenario ? (
           <>
             <div style={{ marginTop: 18 }}>
               <PredictCard scenario={scenario} />

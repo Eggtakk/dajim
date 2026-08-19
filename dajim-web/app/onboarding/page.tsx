@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons/Icon";
 import { Button } from "@/components/ui/Button";
+import { usePlaidConnect } from "@/lib/usePlaidConnect";
 
 const STEPS = [
   {
@@ -29,6 +30,9 @@ export default function OnboardingPage() {
   const isLast = step === STEPS.length - 1;
   const current = STEPS[step];
 
+  const goHome = useCallback(() => router.push("/home"), [router]);
+  const { connect } = usePlaidConnect(goHome);
+
   return (
     <div className="onboard-page">
       <div className="onboard-card">
@@ -52,7 +56,7 @@ export default function OnboardingPage() {
           }}
         >
           {isLast ? (
-            <Button block onClick={() => router.push("/home")}>
+            <Button block onClick={connect}>
               계좌 연결하고 시작하기
             </Button>
           ) : (
@@ -64,7 +68,7 @@ export default function OnboardingPage() {
             variant="ghost"
             block
             style={{ borderColor: "transparent" }}
-            onClick={() => router.push("/home")}
+            onClick={goHome}
           >
             나중에 할게요
           </Button>

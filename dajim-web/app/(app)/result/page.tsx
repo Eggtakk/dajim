@@ -16,12 +16,17 @@ export default function ResultPage() {
   const [outcome, setOutcome] = useState<ResultOutcome>("win");
   const [chosenId, setChosenId] = useState<string | null>(null);
   const [result, setResult] = useState<ResultData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetchResult(goal, outcome).then((data) => {
-      if (!cancelled) setResult(data);
-    });
+    fetchResult(goal, outcome)
+      .then((data) => {
+        if (!cancelled) setResult(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
@@ -61,7 +66,15 @@ export default function ResultPage() {
           </button>
         </div>
 
-        {!result ? (
+        {error ? (
+          <p className="empty-note">
+            불러오지 못했어요: {error}
+            <br />
+            <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => location.reload()}>
+              다시 시도
+            </button>
+          </p>
+        ) : !result ? (
           <p className="empty-note">불러오는 중…</p>
         ) : (
           <div style={{ marginTop: 16 }}>

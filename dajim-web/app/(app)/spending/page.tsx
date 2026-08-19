@@ -9,20 +9,25 @@ import { fetchHomeSummary, fetchTransactions } from "@/lib/api";
 import { formatPct, formatWon } from "@/lib/format";
 import type { HomeSummary, Transaction } from "@/lib/types";
 
-const ACCOUNTS = ["전체", "카카오뱅크", "신한카드"] as const;
+const ALL = "전체";
 
 export default function SpendingPage() {
-  const [account, setAccount] = useState<(typeof ACCOUNTS)[number]>("전체");
+  const [account, setAccount] = useState(ALL);
   const [summary, setSummary] = useState<HomeSummary | null>(null);
   const [transactions, setTransactions] = useState<Transaction[] | null>(
     null,
   );
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetchHomeSummary().then((data) => {
-      if (!cancelled) setSummary(data);
-    });
+    fetchHomeSummary()
+      .then((data) => {
+        if (!cancelled) setSummary(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
@@ -30,25 +35,42 @@ export default function SpendingPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchTransactions(account === "전체" ? undefined : account).then(
-      (res) => {
+    fetchTransactions()
+      .then((res) => {
         if (!cancelled) setTransactions(res.transactions);
-      },
-    );
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      });
     return () => {
       cancelled = true;
     };
-  }, [account]);
+  }, []);
+
+  // Account names now come from wherever the transactions originated
+  // (mock data or a real Plaid Item), so the chip list is derived, not fixed.
+  const accounts = useMemo(() => {
+    const distinct = new Set((transactions ?? []).map((t) => t.account));
+    return [ALL, ...Array.from(distinct)];
+  }, [transactions]);
+
+  const filtered = useMemo(
+    () =>
+      account === ALL
+        ? (transactions ?? [])
+        : (transactions ?? []).filter((t) => t.account === account),
+    [transactions, account],
+  );
 
   const grouped = useMemo(() => {
     const map = new Map<string, Transaction[]>();
-    for (const t of transactions ?? []) {
+    for (const t of filtered) {
       const list = map.get(t.day) ?? [];
       list.push(t);
       map.set(t.day, list);
     }
     return Array.from(map.entries());
-  }, [transactions]);
+  }, [filtered]);
 
   return (
     <>
@@ -82,7 +104,7 @@ export default function SpendingPage() {
       </Card>
 
       <div className="chiprow" style={{ marginBottom: 8 }}>
-        {ACCOUNTS.map((a) => (
+        {accounts.map((a) => (
           <Chip key={a} selected={account === a} onClick={() => setAccount(a)}>
             {a}
           </Chip>
@@ -90,7 +112,16 @@ export default function SpendingPage() {
       </div>
 
       <Card style={{ padding: "6px 20px 14px", marginTop: 10 }}>
-        {transactions === null && (
+        {error && (
+          <div className="empty-note">
+            불러오지 못했어요: {error}
+            <br />
+            <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => location.reload()}>
+              다시 시도
+            </button>
+          </div>
+        )}
+        {!error && transactions === null && (
           <div className="empty-note">불러오는 중…</div>
         )}
         {transactions !== null && grouped.length === 0 && (
@@ -107,7 +138,8 @@ export default function SpendingPage() {
                 <div className="tx-mid">
                   <div className="t">{t.merchant}</div>
                   <div className="d">
-                    {t.time} · {t.account}
+                    {t.time ? `${t.time} · ` : ""}
+                    {t.account}
                   </div>
                 </div>
                 <div className="tx-amt">-{formatWon(t.amountWon)}</div>
