@@ -1,0 +1,59 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Goal Simulation Demo",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/goal_simulation_demo.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      },
+      "justMyCode": true
+    },
+    {
+      "name": "Goal Simulation Demo (No AI)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/goal_simulation_demo.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "OPENAI_API_KEY": "",
+        "PYTHONIOENCODING": "utf-8"
+      },
+      "justMyCode": true
+    },
+    {
+      "name": "AI Tone Scenario Compare",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/ai_tone_scenario_demo.py",
+      "args": ["--all"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      },
+      "justMyCode": true
+    },
+    {
+      "name": "AI Tone Scenario Single",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/ai_tone_scenario_demo.py",
+      "args": ["--tone", "soft_coach"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      },
+      "justMyCode": true
+    }
+  ]
+}
