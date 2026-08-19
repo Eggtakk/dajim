@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-08-19 20:16",
+  "source_rows": 2763850,
+  "unique_merchants": 1834676,
+  "merchant_dict_size": 67244,
+  "brand_dict_size": 344,
+  "test_accuracy_all": 0.728,
+  "test_accuracy_classified": 0.7496,
+  "unknown_rate": 0.0287,
+  "macro_f1_evaluable": 0.7312,
+  "real_world_accuracy": 1.0,
+  "layer_coverage": {
+    "L5_ml": 54.23,
+    "L4_keyword": 31.94,
+    "L3_merchant": 8.57,
+    "L5_ml_lowconf": 2.87,
+    "L2_brand": 2.38,
+    "L1_pg": 0.0,
+    "L1_non_spending": 0.0
+  }
+}
