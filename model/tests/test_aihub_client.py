@@ -61,3 +61,11 @@ def test_download_returns_result_on_success(tmp_path):
     assert result.returncode == 0
     assert result.stdout == "done"
     assert tmp_path.exists()
+
+
+def test_download_raises_clear_error_when_aihubshell_missing(tmp_path):
+    config = _config(data_dir=tmp_path)
+    with patch("data.aihub_client.subprocess.run") as mock_run:
+        mock_run.side_effect = FileNotFoundError("[Errno 2] No such file or directory: 'aihubshell'")
+        with pytest.raises(AihubDownloadError, match="aihubshell.*PATH"):
+            download(config)

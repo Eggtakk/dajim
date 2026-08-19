@@ -49,13 +49,19 @@ def download(config: AihubConfig, aihubshell_path: str = "aihubshell") -> Downlo
     command = build_download_command(config, aihubshell_path)
     config.data_dir.mkdir(parents=True, exist_ok=True)
 
-    completed = subprocess.run(
-        command,
-        cwd=config.data_dir,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=config.data_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise AihubDownloadError(
+            f"'{aihubshell_path}'를 찾을 수 없습니다 — PATH에 aihubshell이 설치되어 "
+            "있는지 확인하세요 (model/README.md의 설치 안내 참고)."
+        ) from exc
     if completed.returncode != 0:
         raise AihubDownloadError(
             f"aihubshell exited with code {completed.returncode}: {completed.stderr}"
