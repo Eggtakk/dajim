@@ -15,15 +15,14 @@ from .config import AihubConfig
 
 
 class AihubDownloadError(RuntimeError):
-    """Raised when the aihubshell subprocess exits non-zero."""
+    """Raised when the aihubshell subprocess exits non-zero, or can't be
+    found at all."""
 
 
 @dataclass(frozen=True)
 class DownloadResult:
     command: list[str]
     returncode: int
-    stdout: str
-    stderr: str
 
 
 def build_download_command(config: AihubConfig, aihubshell_path: str = "aihubshell") -> list[str]:
@@ -44,8 +43,18 @@ def build_download_command(config: AihubConfig, aihubshell_path: str = "aihubshe
 
 def download(config: AihubConfig, aihubshell_path: str = "aihubshell") -> DownloadResult:
     """Run aihubshell to download the configured dataset/files into
-    config.data_dir (created if missing). Raises AihubDownloadError if
-    aihubshell exits non-zero."""
+    config.data_dir (created if missing).
+
+    stdout/stderr are inherited from this process rather than captured:
+    aihubshell can run for minutes on a large dataset, prints its own
+    progress, and may prompt for confirmation. Capturing its output would
+    buffer all of that until the process exits, making a download that's
+    actually working look hung. Letting it write straight to the terminal
+    also means a stdin prompt from aihubshell reaches the user, since
+    subprocess.run inherits stdin by default too.
+
+    Raises AihubDownloadError if aihubshell exits non-zero or isn't found.
+    """
     command = build_download_command(config, aihubshell_path)
     config.data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -53,8 +62,6 @@ def download(config: AihubConfig, aihubshell_path: str = "aihubshell") -> Downlo
         completed = subprocess.run(
             command,
             cwd=config.data_dir,
-            capture_output=True,
-            text=True,
             check=False,
         )
     except FileNotFoundError as exc:
@@ -64,11 +71,6 @@ def download(config: AihubConfig, aihubshell_path: str = "aihubshell") -> Downlo
         ) from exc
     if completed.returncode != 0:
         raise AihubDownloadError(
-            f"aihubshell exited with code {completed.returncode}: {completed.stderr}"
+            f"aihubshell exited with code {completed.returncode} — 위 출력에서 원인을 확인하세요."
         )
-    return DownloadResult(
-        command=command,
-        returncode=completed.returncode,
-        stdout=completed.stdout,
-        stderr=completed.stderr,
-    )
+    return DownloadResult(command=command, returncode=completed.returncode)

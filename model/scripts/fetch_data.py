@@ -17,14 +17,12 @@ from data.config import load_config
 def main() -> int:
     config = load_config()
     try:
-        result = download(config)
+        download(config)
     except (ValueError, AihubDownloadError) as exc:
         print(f"다운로드 실패: {exc}", file=sys.stderr)
         return 1
 
     print(f"다운로드 완료: {config.data_dir}")
-    if result.stdout:
-        print(result.stdout)
     return 0
 
 

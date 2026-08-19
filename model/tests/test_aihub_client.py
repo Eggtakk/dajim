@@ -45,9 +45,7 @@ def test_download_raises_on_nonzero_exit(tmp_path):
     config = _config(data_dir=tmp_path)
     with patch("data.aihub_client.subprocess.run") as mock_run:
         mock_run.return_value.returncode = 1
-        mock_run.return_value.stdout = ""
-        mock_run.return_value.stderr = "auth failed"
-        with pytest.raises(AihubDownloadError, match="auth failed"):
+        with pytest.raises(AihubDownloadError, match="exited with code 1"):
             download(config)
 
 
@@ -55,12 +53,23 @@ def test_download_returns_result_on_success(tmp_path):
     config = _config(data_dir=tmp_path)
     with patch("data.aihub_client.subprocess.run") as mock_run:
         mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "done"
-        mock_run.return_value.stderr = ""
         result = download(config)
     assert result.returncode == 0
-    assert result.stdout == "done"
     assert tmp_path.exists()
+
+
+def test_download_does_not_capture_output(tmp_path):
+    """aihubshell's own progress/prompts must reach the real terminal live —
+    capturing stdout/stderr would buffer them until the process exits,
+    making a working download look hung (see fix/aihub-download-stream-output)."""
+    config = _config(data_dir=tmp_path)
+    with patch("data.aihub_client.subprocess.run") as mock_run:
+        mock_run.return_value.returncode = 0
+        download(config)
+    _, kwargs = mock_run.call_args
+    assert "capture_output" not in kwargs
+    assert "stdout" not in kwargs
+    assert "stderr" not in kwargs
 
 
 def test_download_raises_clear_error_when_aihubshell_missing(tmp_path):
