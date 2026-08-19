@@ -1,8 +1,11 @@
+import pytest
+
 from prediction.trend_model import (
     TrendPrediction,
     infer_now,
     predict_category_trend,
 )
+from tests.fixtures_ts_cross_check import CASES
 
 
 def test_predict_category_trend_empty_history_returns_zeros():
@@ -34,3 +37,15 @@ def test_predict_category_trend_single_completed_week_paces_current_week():
     assert len(result.trend) == 2
     assert isinstance(result.projected_month_won, int)
     assert isinstance(result.change_pct, int)
+
+
+@pytest.mark.parametrize("category", sorted(CASES))
+def test_matches_predictTrend_ts_output(category):
+    case = CASES[category]
+    result = predict_category_trend(case["history"])
+    expected = case["prediction"]
+
+    assert result.trend == expected["trend"]
+    assert result.projected_month_won == expected["projected_month_won"]
+    assert result.last_month_won == expected["last_month_won"]
+    assert result.change_pct == expected["change_pct"]
