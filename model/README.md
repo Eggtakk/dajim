@@ -49,23 +49,49 @@ key was available. `data/aihub_client.py` builds and runs the `aihubshell`
 command; its argument-building is unit tested, and download failures raise
 `AihubDownloadError` rather than failing silently.
 
-## Column mapping caveat
+## Two data paths — read this first
 
-`data/schema.py` names the 카드 승인매출정보 columns (승인일자/가맹점업종코드/승인금액)
-and maps merchant category codes to dajim's four categories. These names/codes
-are best-effort based on standard Korean card-transaction terminology, not a
-verified copy of AI Hub's real column headers (the detailed schema spreadsheet
-requires 안심존/download access this session didn't have). **Before running
-`fetch_data`/`run_prediction` against a real downloaded file, run
-`head -1 <file>.csv` and update the constants in `data/schema.py` to match.**
-Nothing else needs to change — `loader.py` and the tests both import from
-`schema.py`, so fixing the constants there is sufficient.
+`data/schema.py` (승인일자/가맹점업종코드/승인금액, per-transaction) was written
+*before* a real file was available, as a best-effort guess. Once the real
+카드 승인매출정보 file was downloaded and inspected (2026-08-19), it turned out
+to be structured completely differently — see `data/schema_monthly.py`'s
+docstring for the real column names. **Use the monthly path, not
+`loader.py`/`schema.py`, for this file:**
+
+- Each monthly CSV (`201807_승인매출정보.csv`, ...) is a **panel of many
+  synthetic customers**, one row per (`발급회원번호`, `기준년월`) — not raw
+  transactions. Category totals (쇼핑/요식/RP 등) are already pre-aggregated
+  as columns; there's nothing to categorize or aggregate into weeks.
+- `data/monthly_loader.py`'s `load_customer_monthly_spend()` picks one
+  customer's row out of each monthly file and returns their category totals
+  as a `MonthlySpendPoint` series (see its docstring / `schema_monthly.py`
+  for which AI Hub columns map to which dajim category, and why "cafe"
+  isn't derivable from this file).
+- `prediction/monthly_trend_model.py`'s `predict_next_month()` fits a
+  linear trend over that series and extrapolates one month forward — the
+  monthly analogue of `predict_category_trend()`, minus the within-month
+  pace-blending (every month here is a closed period, not a partial one).
+
+`loader.py`/`schema.py`/`predict_category_trend()` (the weekly,
+per-transaction path) are kept as-is for a data source that actually looks
+like that — e.g. a real open-banking/card transaction feed — but they were
+never validated against this AI Hub file and most likely don't apply to it.
 
 ## Running
 
 ```bash
-python -m scripts.fetch_data                       # download raw CSVs
-python -m scripts.run_prediction data/raw/카드승인매출정보.csv  # aggregate + predict
+python -m scripts.fetch_data                       # download raw CSVs (see caveat above re: aihubshell's merge step)
+python3 -c "
+from pathlib import Path
+from data.monthly_loader import load_customer_monthly_spend
+from prediction.monthly_trend_model import predict_next_month
+
+zip_path = Path('data/raw/.../03.카드_승인매출정보.zip')  # wherever you extracted/merged it
+months = [f'2018{m:02d}_승인매출정보.csv' for m in range(7, 13)]
+series = load_customer_monthly_spend(zip_path, months, member_id='SYN_0')
+for category, points in series.items():
+    print(category, predict_next_month(points))
+"
 ```
 
 ## Testing

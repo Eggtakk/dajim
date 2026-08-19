@@ -34,25 +34,28 @@ class TrendPrediction:
 
 
 @dataclass(frozen=True)
-class _LinearFit:
+class LinearFit:
     slope: float
     intercept: float
 
 
-def _round_half_up(value: float) -> int:
+def round_half_up(value: float) -> int:
     """Match JS's Math.round (rounds half toward +Infinity), not Python's
     round() (rounds half to even) — needed for exact numeric parity with
-    predictTrend.ts."""
+    predictTrend.ts. Shared with prediction/monthly_trend_model.py."""
     return math.floor(value + 0.5)
 
 
-def _fit_linear_trend(ys: list[float]) -> _LinearFit:
-    """Least-squares fit of y = intercept + slope * x over x = 0..len(ys)-1."""
+def fit_linear_trend(ys: list[float]) -> LinearFit:
+    """Least-squares fit of y = intercept + slope * x over x = 0..len(ys)-1.
+    Shared with prediction/monthly_trend_model.py — the regression math is
+    granularity-agnostic, only the surrounding period logic (weekly here)
+    differs."""
     n = len(ys)
     if n == 0:
-        return _LinearFit(slope=0.0, intercept=0.0)
+        return LinearFit(slope=0.0, intercept=0.0)
     if n == 1:
-        return _LinearFit(slope=0.0, intercept=ys[0])
+        return LinearFit(slope=0.0, intercept=ys[0])
 
     x_mean = (n - 1) / 2
     y_mean = sum(ys) / n
@@ -62,7 +65,7 @@ def _fit_linear_trend(ys: list[float]) -> _LinearFit:
         numerator += (x - x_mean) * (y - y_mean)
         denominator += (x - x_mean) ** 2
     slope = 0.0 if denominator == 0 else numerator / denominator
-    return _LinearFit(slope=slope, intercept=y_mean - slope * x_mean)
+    return LinearFit(slope=slope, intercept=y_mean - slope * x_mean)
 
 
 def _parse_iso_date(iso: str) -> dt.date:
@@ -104,7 +107,7 @@ def predict_category_trend(history: list[WeeklySpendPoint]) -> TrendPrediction:
 
     current = history[-1]
     completed = history[:-1]
-    fit = _fit_linear_trend([p["total_won"] for p in completed])
+    fit = fit_linear_trend([p["total_won"] for p in completed])
 
     days_elapsed = min(7, max(1, current["days_elapsed"]))
     pace_estimate = (current["total_won"] / days_elapsed) * 7
@@ -117,8 +120,8 @@ def predict_category_trend(history: list[WeeklySpendPoint]) -> TrendPrediction:
     )
 
     trend_tail = completed[-(TREND_WEEKS - 1):]
-    trend = [_round_half_up(p["total_won"]) for p in trend_tail] + [
-        _round_half_up(blended_current_week)
+    trend = [round_half_up(p["total_won"]) for p in trend_tail] + [
+        round_half_up(blended_current_week)
     ]
 
     now = infer_now(history)
@@ -141,14 +144,14 @@ def predict_category_trend(history: list[WeeklySpendPoint]) -> TrendPrediction:
     projected_month_won = actual_so_far_this_month + daily_rate * days_remaining_in_month
 
     change_pct = (
-        _round_half_up(((projected_month_won - last_month_won) / last_month_won) * 100)
+        round_half_up(((projected_month_won - last_month_won) / last_month_won) * 100)
         if last_month_won > 0
         else 0
     )
 
     return TrendPrediction(
         trend=trend,
-        projected_month_won=_round_half_up(projected_month_won),
-        last_month_won=_round_half_up(last_month_won),
+        projected_month_won=round_half_up(projected_month_won),
+        last_month_won=round_half_up(last_month_won),
         change_pct=change_pct,
     )
